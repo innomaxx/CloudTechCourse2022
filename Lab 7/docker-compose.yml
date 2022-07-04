@@ -1,0 +1,21 @@
+version: '3.9'
+
+services: 
+  mysql: 
+    build: mysql
+    container_name: db
+    ports: 
+      - 3037:3036
+    networks: 
+      - net
+  nginx: 
+     build: nginx
+     container_name: nginx
+     ports: 
+       - 8080:80
+     networks: 
+       - net
+
+networks: 
+  net: 
+    driver: bridge
