@@ -39,20 +39,31 @@ resource "docker_container" "app" {
 
   env = ["DB_HOST=db,1433", "DB_NAME=NetChatApp", "DB_USER=chatadmin", "DB_PASS=ChatPass34!", "ASPNETCORE_ENVIRONMENT=Production", "ASPNETCORE_HOSTINGSTARTUPASSEMBLIES=Microsoft.AspNetCore.Mvc.Razor.RuntimeCompilation", "ASPNETCORE_URLS=http://0.0.0.0:5500"]
 
-  depends_on = [docker_network.demo-net, docker_container.mssql]
+  depends_on = [docker_network.demo-net, docker_container.db]
 }
 
 resource "docker_volume" "mssql-data" {
   name = "mssql-data"
 }
 
-resource "docker_container" "mssql" {
+resource "docker_volume" "mssql-logs" {
+  name = "mssql-logs"
+}
+
+resource "docker_volume" "mssql-secrets" {
+  name = "mssql-secrets"
+}
+
+
+resource "docker_container" "db" {
   image      = docker_image.db.latest
-  name       = "mssql"
+  name       = "db"
 
   networks_advanced {
     name = docker_network.demo-net.name
   }
+  
+  user = "root"
 
   env = ["ACCEPT_EULA=Y", "MSSQL_SA_PASSWORD=(@MyVery.StrongPass@).2400", "MSSQL_DB=NetChatApp", "MSSQL_DB_USER=chatadmin", "MSSQL_DB_PASS=ChatPass34!"]
 
@@ -60,6 +71,16 @@ resource "docker_container" "mssql" {
     container_path = "/var/opt/mssql/data"
     volume_name = docker_volume.mssql-data.name
   }
+  
+  volumes {
+    container_path = "/var/opt/mssql/log"
+    volume_name = docker_volume.mssql-logs.name
+  }
+  
+  volumes {
+    container_path = "/var/opt/mssql/secrets"
+    volume_name = docker_volume.mssql-secrets.name
+  }
 
-  depends_on = [docker_network.demo-net, docker_volume.mssql-data]
+  depends_on = [docker_network.demo-net, docker_volume.mssql-data, docker_volume.mssql-logs, docker_volume.mssql-secrets]
 }
